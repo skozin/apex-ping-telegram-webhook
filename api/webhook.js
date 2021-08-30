@@ -44,16 +44,43 @@ async function postUpdate(text) {
   }
 }
 
+function formatMessageOrError(data) {
+  try {
+    return formatMessage(data)
+  } catch (err) {
+    return tgEscape(
+      `Failed formatting incoming message: ${JSON.stringify(data, null, '  ')}\n` +
+      `Error: ${err.message}`
+    )
+  }
+}
+
 function formatMessage(data) {
-  const state = data.state == 'triggered' ? '*New alert*' : 'Resolved'
+  const isTriggered = data.state == 'triggered'
+  const state = isTriggered ? '*New alert*' : 'Resolved'
   const {alert, check} = data
-  const alertType = String(alert.type).toUpperCase()
-  const alertName = `${check.name} (${check.method} ${check.protocol}://${check.url})`
-  return `${state}: ${tg_escape(alertType)} ${tg_escape(alertName)}`
+  const alertDesc = alert.type == 'downtime'
+    ? describeDowntime(isTriggered, check)
+    : describeAlert(isTriggered, alert, check)
+  return `${state}: ${tgEscape(alertDesc)}`
+}
+
+function describeDowntime(isTriggered, check) {
+  const header = `${check.name} is ${isTriggered ? 'DOWN' : 'back up'}`
+  return isTriggered ? `${header} (${describeCheckAction(check)})` : header
+}
+
+function describeAlert(isTriggered, alert, check) {
+  const checkDesc = isTriggered ? `${check.name} (${describeCheckAction(check)})` : check.name
+  return `${alert.type} ${checkDesc}`
+}
+
+function describeCheckAction(check) {
+  return `${check.method} ${check.protocol}://${check.url}`
 }
 
 const TG_ESCAPE_RE = /[_\*\[\]\(\)~`>#+\-=\|{}\.!]/g
 
-function tg_escape(text) {
+function tgEscape(text) {
   return text.replace(TG_ESCAPE_RE, '\\$&')
 }
