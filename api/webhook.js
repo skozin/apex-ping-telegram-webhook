@@ -10,7 +10,7 @@ export default async (req, res) => {
     return
   }
   try {
-    const text = formatMessage(req.body)
+    const text = formatMessageOrError(req.body)
     await postUpdate(text)
     res.json({ok: true})
   } catch (err) {
