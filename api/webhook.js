@@ -49,5 +49,11 @@ function formatMessage(data) {
   const {alert, check} = data
   const alertType = String(alert.type).toUpperCase()
   const alertName = `${check.name} (${check.method} ${check.protocol}://${check.url})`
-  return `${state}: ${alertType} ${alertName}`
+  return `${state}: ${tg_escape(alertType)} ${tg_escape(alertName)}`
+}
+
+const TG_ESCAPE_RE = /[_\*\[\]\(\)~`>#+\-=\|{}\.!]/g
+
+function tg_escape(text) {
+  return text.replace(TG_ESCAPE_RE, '\\$&')
 }
